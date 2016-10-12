@@ -47,7 +47,12 @@ int main ()
     std::pair<char, std::string> aluetype('a',"bc");
 
     cs540::Map<char,std::string> morse1;
-
+    cs540::Map<int, int> map;
+    morse.insert(std::make_pair('a', "plus"));
+    morse.insert(std::make_pair('c',"minus"));
+     morse.insert(std::make_pair('d', "plus"));
+    morse.insert(std::make_pair('b',"minus"));
+   morse.sk_list.print();
 
    return 0;
 }

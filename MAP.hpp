@@ -33,10 +33,10 @@ class skip_list{
 			total_levels 			= MAX_NUM_LEVELS;
 			current_height 			= INITIAL_HEIGHT;
 			height_index			= 0;
-			head[current_height-1] 		= new node();	
+		//	head[current_height-1] 		= new node();	
 			int i = current_height-1;//zero indexing.
 			//i = 0 being the main list where all elements are present.
-			while(i<=0){
+			while(i>=0){
 				head[i] 	= new node();
 				head[i]->next 	= NULL;
 				head[i]->prev 	= NULL;
@@ -45,8 +45,9 @@ class skip_list{
 				count_level[i]  = 0;
 				i--;
 			}
+			i=0;
 			while(i<current_height){
-				if(i == current_height){
+				if(i == current_height-1){
 					head[i]->down = head[i-1];
 				}
 				if(i!=0){
@@ -60,17 +61,54 @@ class skip_list{
 				i++;
 			}
 		}
-		void insert( std::pair<const Key_T, Mapped_T> data){
-			std::cout<<data.first<<data.second<<std::endl;	
-			node *to_insert = new node();
-			to_insert->data = data;
-			/*Inserting the first node*/
-			if(height_index == 0 && count_level[0] == 0){
-				std::cout<<head[0]<<"-----------------------";
-			//	head[0]->next  = to_insert;
-				count_level[0] = 1;	
+		std::pair<node *,bool> insert( std::pair<const Key_T, Mapped_T> data){
+		//	std::cout<<data.first<<data.second<<std::endl;	
+			node *to_insert 	= new node();			
+			to_insert->data 	= data;
+			int temp_level		= height_index;
+			node *start	 	= head[height_index];
+
+			while( temp_level > 0){
+//			Traverse to the level 0 where element needs to be inserte
+				if(start->next == NULL || data.first < start->next->data.first){
+					temp_level-=1;
+					start = start->down;
+					continue;
+				}
+				start = start->next;	
+			}			
+			/*inserting at the end of the linked list or first node of the skip_list*/
+			if(start->next == NULL){
+	//			std::cout<<head[0]<<"-----------------------";
+				start->next  	= to_insert;
+				to_insert->prev	= start;
+				tail[0]		= to_insert;
+				count_level[0] += 1;	
+				return(std::make_pair(start->next,true));
+			}
+			else{
+				//traverse and find where to insert the element
+				while(start->next!=NULL && data.first < start->next->data.first){
+					start = start->next;
+				}
+				if(data.first == start->next->data.first){
+					return(std::make_pair(start->next,false));
+				}
+				to_insert->prev = start;
+				to_insert->next = start->next;
+				if(start->next == NULL){tail[0]=to_insert;}
+				start->next = to_insert;
+				return(std::make_pair(start->next,true));
 			}
 
+		}
+		void print(){
+			node * traversal = head[0]->next;
+
+			while(traversal!=NULL){
+				std::cout<<traversal->data.first<<traversal->data.second<<std::endl;
+				traversal = traversal->next;
+			}		
 		}
 };
 
@@ -86,7 +124,11 @@ class Map{
 
 	class Iterator{
 	public:
-		skiptype point;
+		//to treat node as class type, rather than a member.
+		typename skiptype::node  *point;
+		Iterator(typename skiptype::node *val){
+			point = val;
+		}
 		
 	};
 	typedef std::pair< Key_T, Mapped_T> 			ValueType;
@@ -107,11 +149,21 @@ class Map{
 			sk_list.insert(std::make_pair(std::get<0>(*start_ptr),std::get<1>(*start_ptr)));			
 			start_ptr++;
 		}
+//		sk_list.print();
 	}
-//	std::pair<Iterator, bool> insert(const ValueType & insert_value){
-//		Iterator return_it;bool return_flag=true;
-//		return (std::make_pair(return_it,return_flag));
-//	}
+//	void insert(const ValueType & insert_value){
+	std::pair<Iterator, bool> insert(const ValueType & insert_value){
+
+		typename skiptype::node * ret_iterator;	bool flag;
+
+		auto ret = std::make_pair(ret_iterator,flag);
+		ret	 = sk_list.insert(insert_value);
+
+		Iterator it(ret.first);
+		flag = ret.second;
+
+		return (std::make_pair(it,flag));
+	}
 	/*Element access funcitons*/
 	//Mapped_T &at(const Key_T &){
 	//}
