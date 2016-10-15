@@ -44,15 +44,30 @@ cs540::Map<char, std::string> morse {
 };
 int main ()
 {
-    std::pair<char, std::string> aluetype('a',"bc");
+    	cs540::Map<char, std::string> cc_check(morse);
+	cs540::Map<char, std::string> cc_check2;
 
-    cs540::Map<char,std::string> morse1;
+    cs540::Map<int,std::string> morse1;
     cs540::Map<int, int> map;
-    morse.insert(std::make_pair('a', "plus"));
-    morse.insert(std::make_pair('c',"minus"));
-     morse.insert(std::make_pair('d', "plus"));
-    morse.insert(std::make_pair('b',"minus"));
+    morse1.insert(std::make_pair(1, "plus"));
+ //	morse1.sk_list.print();
+
+   morse1.insert(std::make_pair(2,"minus"));
+//	morse1.sk_list.print();
+
+    morse1.insert(std::make_pair(3, "plus"));
+//	morse1.sk_list.print();
+
+    morse1.insert(std::make_pair(4,"minus"));
+
+   morse1.insert(std::make_pair(5, "plus"));
+    morse1.insert(std::make_pair(6,"minus"));
+    morse1.insert(std::make_pair(7, "plus"));
+    morse1.insert(std::make_pair(8,"minus"));
+	morse1.sk_list.print();
    morse.sk_list.print();
+   cc_check.sk_list.print();	
+//  cc_check2(cc_check2);
 
    return 0;
 }
