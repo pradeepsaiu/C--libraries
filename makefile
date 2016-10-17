@@ -16,4 +16,15 @@ valgrind_detail:
 minimal:
 	g++ minimal.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
 	./out
-
+test-scaling:
+	g++ test-scaling.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
+	./out
+test-kec:
+	g++ test-kec.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
+	./out
+test:
+	g++ test.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
+	./out
+morse:
+	g++ morseex.cpp -Wall -Wextra -pedantic -ldl -std=c++11 -o out
+	./out

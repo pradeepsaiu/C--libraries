@@ -106,7 +106,7 @@ int main() {
     m.at(2);
     auto iter = m.find(2);
     m.erase(iter);
- /*   auto m_copy = m;
+    auto m_copy = m;
     assert(m_copy == m);
 
     cs540::Map<MyKeyType, MyDefaultConstructible> m2{{8, 9}};
@@ -117,6 +117,6 @@ int main() {
     m3[20] = {5}; // move assign
     MyAssignable ma{1};
     m3[10] = ma; //copy assign
-*/
+
     return 0;
 }

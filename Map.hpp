@@ -1,6 +1,7 @@
 #ifndef DEQHPP
 #define DEQHPP
 //to  get pair
+#include<stdlib.h>
 #include <utility> 
 #include <stdexcept>
 #include <iostream>
@@ -29,7 +30,7 @@ class skip_list{
 		/*To initialize the skip list structure 4 nodes pointing to null*/
 		skip_list(){
 			//to help generate random numbers in different runs.
-			srand(time(NULL));
+			//srand(time(NULL));
 			total_levels 			= MAX_NUM_LEVELS;
 			current_height 			= INITIAL_HEIGHT;
 			height_index			= 0;
@@ -49,7 +50,7 @@ class skip_list{
 			while(i<current_height){
 				if(i == current_height-1){
 					head[i]->down = head[i-1];
-				}
+		}
 				if(i!=0){
 					head[i]->down = head[i-1];
 					head[i]->top  = head[i+1];
@@ -63,6 +64,7 @@ class skip_list{
 		std::pair<node *,bool> insert( std::pair<const Key_T, Mapped_T> data){
 //			std::cout<<"\n###################\n";
 		//	std::cout<<data.first<<data.second<<std::endl;	
+			srand(time(NULL));
 			node *to_insert 	= new node();			
 			node *base;
 			to_insert->data 	= data;
@@ -173,7 +175,7 @@ class Map{
 	typedef skip_list<Key_T,Mapped_T>	 		skiptype;
 	typedef std::pair< Key_T, Mapped_T> 			ValueType;
 
-	class Iterator{
+	class Iterator:public Map{
 	public:
 		typename skiptype::node  *point;
 		Iterator(typename skiptype::node *val){
@@ -205,16 +207,72 @@ class Map{
 			return &(this->point->data);
 		}
 	};
-	class ConstIterator{
+	class ReverseIterator:public Map{
 	public:
-		const typename skiptype::node *point;
-		ConstIterator(const Iterator & val){
-			point = val.point;
+		typename skiptype::node  *point;
+		ReverseIterator(typename skiptype::node *val){
+			point = val;
+		}		
+	
+		ReverseIterator &operator++(int){
+			ReverseIterator *ret1 = new ReverseIterator(this->point);
+			this->point = this->point->prev;
+			return *ret1;
+		}
+		ReverseIterator &operator++(){
+			this->point = this->point->prev;
+			return *(this);
+		}
+		ReverseIterator &operator--(int){
+			ReverseIterator *ret1 = new ReverseIterator(this->point);
+			this->point = this->point->next;
+			return *ret1;
+		}
+		ReverseIterator &operator--(){
+			this->point = this->point->next;
+			return *(this);
+		}
+		ValueType &operator*() const{
+			return this->point->data;	
+		}
+		ValueType *operator->() const{
+			return &(this->point->data);
 		}
 	};
 
+	class ConstIterator:public Map{
+	public:
+		typename skiptype::node  *point;
+		ConstIterator(typename skiptype::node *val){
+			point = val;
+		}		
+	
+		ConstIterator &operator++(int){
+			ConstIterator *ret1 = new Iterator(this->point);
+			this->point = this->point->next;
+			return *ret1;
+		}
+		ConstIterator &operator++(){
+			this->point = this->point->next;
+			return *(this);
+		}
+		ConstIterator &operator--(int){
+			ConstIterator *ret1 = new Iterator(this->point);
+			this->point = this->point->prev;
+			return *ret1;
+		}
+		ConstIterator &operator--(){
+			this->point = this->point->prev;
+			return *(this);
+		}
+		ValueType &operator*() const{
+			return this->point->data;	
+		}
+		ValueType *operator->() const{
+			return &(this->point->data);
+		}
+	};
 
-	//int size;
 	skip_list<Key_T,Mapped_T> sk_list;
 	Iterator begin(){
 		return Iterator(sk_list.head[0]->next);
@@ -222,10 +280,39 @@ class Map{
 	ConstIterator begin() const{
 		return ConstIterator(Iterator(sk_list.head[0]->next));
 	}
+	ConstIterator end() const{
+		return ConstIterator(Iterator(NULL));
+	}	
 	Iterator end(){
 		return Iterator(NULL);
 	}
-
+	ReverseIterator rbegin(){
+		typename skiptype::node *it1 = sk_list.head[0];
+		while(it1->next !=NULL) it1 = it1->next;
+		return ReverseIterator(it1);
+	}
+	ReverseIterator rend(){
+		return ReverseIterator(sk_list.head[0]);
+	}
+	void clear(){
+		int i = sk_list.current_height-1;//zero indexing.
+		//first remove all elements
+		typename skiptype::node *temp,*temp1;	
+		while(i>=0){
+			temp = sk_list.head[i]->next; 	
+			sk_list.head[i]->next = NULL;
+			while(temp!=NULL){
+				temp1 = temp;
+				temp = temp->next;
+				delete temp1;
+			}
+			i--;
+		}
+		for(int i=sk_list.height_index;i>=0;i--)		
+			sk_list.count_level[i] = 0;
+	
+		sk_list.height_index = 0;	
+	}
 
 	size_t size() const{
 		return sk_list.count_level[0];
@@ -267,7 +354,47 @@ class Map{
 				}
 			}
 	}
-
+	const Mapped_T &at(const Key_T & data_key) const{
+/*			Iterator *ret1 = new Iterator(this->point);
+			this->point = this->point->next;
+			return *ret1;*/
+		//what if it's a empty map.
+			int temp_level		= sk_list.height_index;
+			typename skiptype::node * start	= sk_list.head[sk_list.height_index];
+//			const Mapped_T *ob1;
+	//		const Mapped_T * ob_pointer = new Mapped_T();
+			if(sk_list.count_level[0]==0){
+				throw std::out_of_range("Indexing empty map :/");
+			}
+			while( temp_level > 0){
+//			Traverse to the level 0 where element needs to be inserted
+				if(start->next == NULL || data_key < start->next->data.first){
+					temp_level -= 1;
+					start = start->down;
+					continue;
+				}
+				start = start->next;
+			}			
+			/*inserting at the end of the linked list or first node of the skip_list*/
+			if(start->data.first == data_key){
+				if(start == sk_list.head[0]) throw std::out_of_range("Indexing empty map :...");
+				const Mapped_T *ob1 =  new Mapped_T(start->data.second) ;
+				return *ob1;
+			}
+		else{
+			//traverse and find in case it's only in root
+				while(start->next !=NULL && start->next->data.first <  data_key){
+					start = start->next;
+				}
+				if(start->next != NULL && start->next->data.first == data_key){
+					const Mapped_T  *ob1 = new Mapped_T( start->next->data.second);
+					return *ob1;
+				}
+				else{
+					throw std::out_of_range ("Index not in Map");
+				}
+			}
+	}
 	Iterator find(const Key_T & data_key){
 		//what if it's a empty map.
 			int temp_level		= sk_list.height_index;
@@ -306,7 +433,8 @@ class Map{
 			return(at(key_val));
 		}
 		catch (const std::out_of_range& e){
-			std::cout<<"exce[topm jere";
+			insert(std::make_pair(key_val,Mapped_T()));
+			return(at(key_val));
 		}
 	}
 	Map &operator=(const Map & ob1){
@@ -319,7 +447,8 @@ class Map{
 		return *this;
 	}
 
-	Map(){	 
+	Map(){	
+	//	std::cout<<"hi" ;
 	}
 	Map(std::initializer_list<std::pair<const Key_T, Mapped_T> >  list_args){	
 		auto start_ptr = list_args.begin();
@@ -365,26 +494,6 @@ class Map{
 	}
 	void erase(const Key_T & key_val){
 		erase(find(key_val));
-	}
-	void clear(){
-			int i = sk_list.current_height-1;//zero indexing.
-			//first remove all elements
-			typename skiptype::node *temp,*temp1;	
-			while(i>=0){
-				temp = sk_list.head[i]->next; 	
-				sk_list.head[i]->next = NULL;
-				while(temp!=NULL){
-					temp1 = temp;
-					temp = temp->next;
-					delete temp1;
-				}
-				i--;
-			}
-			for(int i=sk_list.height_index;i>=0;i--)		
-				sk_list.count_level[i] = 0;
-		
-			sk_list.height_index = 0;
-			
 	}
 	std::pair<Iterator, bool> insert(const ValueType & insert_value){
 
@@ -438,6 +547,45 @@ class Map{
 			return true;
 		return false;
 	}
-
+	template<typename Key_T,typename Mapped_T> 
+	bool operator==(const typename Map<Key_T,Mapped_T>::Iterator & ob1,const typename Map<Key_T,Mapped_T>::Iterator & ob2){
+		return (ob1.point->data == ob2.point->data);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator==(const typename Map<Key_T,Mapped_T>::ConstIterator & ob1,const typename Map<Key_T,Mapped_T>::ConstIterator & ob2){
+		return (ob1.point->data == ob2.point->data);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator==(const typename Map<Key_T,Mapped_T>::Iterator & ob1,const typename Map<Key_T,Mapped_T>::ConstIterator & ob2){
+		return (ob1.point->data == ob2.point->data);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator==(const typename Map<Key_T,Mapped_T>::ConstIterator & ob1,const typename Map<Key_T,Mapped_T>::Iterator & ob2){
+		return (ob1.point->data == ob2.point->data);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator==(const typename Map<Key_T,Mapped_T>::ReverseIterator & ob1,const typename Map<Key_T,Mapped_T>::ReverseIterator & ob2){
+		return (ob1.point->data == ob2.point->data);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator!=(const typename Map<Key_T,Mapped_T>::Iterator & ob1,const typename Map<Key_T,Mapped_T>::Iterator & ob2){
+		return !(ob1==ob2);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator!=(const typename Map<Key_T,Mapped_T>::ConstIterator & ob1,const typename Map<Key_T,Mapped_T>::ConstIterator & ob2){
+		return !(ob1==ob2);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator!=(const typename Map<Key_T,Mapped_T>::Iterator & ob1,const typename Map<Key_T,Mapped_T>::ConstIterator & ob2){
+		return !(ob1==ob2);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator!=(const typename Map<Key_T,Mapped_T>::ConstIterator & ob1,const typename Map<Key_T,Mapped_T>::Iterator & ob2){
+		return !(ob1==ob2);
+	}
+	template<typename Key_T,typename Mapped_T> 
+	bool operator!=(const typename Map<Key_T,Mapped_T>::ReverseIterator & ob1,const typename Map<Key_T,Mapped_T>::ReverseIterator & ob2){
+		return !(ob1==ob2);
+	}
 }
 #endif

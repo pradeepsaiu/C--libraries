@@ -111,7 +111,7 @@ cs540::Map<int, int> cubes(int low, int high) {
 
 int main () {
     count_words();
-/*
+
     auto cube = cubes(-5, 10); // move construct returned value
     std::cout << cube.at(-2) << '\n'; // -8
     std::cout << cube.at(5) << '\n';  // 125
@@ -135,6 +135,6 @@ int main () {
 
     access_by_key();
     stress(10000);
-*/
+
     return 0;
 }
